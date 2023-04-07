@@ -1,6 +1,3 @@
-
-
-
 export enum ReverseMapState {
   BLOCK,
   EMPTY,
@@ -13,7 +10,7 @@ export type ChangeColorCallback = (x: number, y: number, color: ReverseMapState)
 
 type AICallbackResult = { x: number, y: number }
 
-export type AICallback = (data: number[]) => AICallbackResult
+export type AICallback = (self: ReverseMap) => AICallbackResult
 
 
 export class ReverseMap {
@@ -36,52 +33,87 @@ export class ReverseMap {
 
   }
 
+  putWithAI(x: number, y: number, color: ReverseMapState) {
+    const isTurnSucceed = this.put(x, y, color)
+
+    if (isTurnSucceed && this.aiCallback) {
+      const result = this.aiCallback(this)
+
+      setTimeout(() => {
+        this.put(result.x, result.y, this.current_color)
+      }, 1000)
+    }
+  }
+
+
   put(x: number, y: number, color: ReverseMapState) {
-    if (this.check(x, y, color)) {
+    if (this._put(x, y, color) > 0) {
       this.change_color(x, y, color);
       this.turn();
 
-      if (this.aiCallback) {
-        const result = this.aiCallback(this.data)
-        this.change_color(result.x, result.y, this.current_color);
-      }
+      return true
     }
   }
 
   check(x: number, y: number, color: ReverseMapState) {
-    return this.checkPart(x - 1, y, color, [-1, 0]) > 1 ||
-      this.checkPart(x + 1, y, color, [1, 0]) > 1 ||
-      this.checkPart(x, y + 1, color, [0, 1]) > 1 ||
-      this.checkPart(x, y - 1, color, [0, -1]) > 1 ||
-      this.checkPart(x - 1, y - 1, color, [-1, -1]) > 1 ||
-      this.checkPart(x + 1, y + 1, color, [1, 1]) > 1 ||
-      this.checkPart(x - 1, y + 1, color, [-1, 1]) > 1 ||
-      this.checkPart(x + 1, y - 1, color, [1, -1]) > 1;
+    return this._check(x, y, color, false)
   }
 
-  checkPart(x: number, y: number, color: ReverseMapState, d: number[]) {
+  _put(x: number, y: number, color: ReverseMapState) {
+    return this._check(x, y, color, true)
+  }
+
+  _check(x: number, y: number, color: ReverseMapState, isMutable: boolean) {
+    var col = this.get_color(x, y);
+
+    if (col !== ReverseMapState.EMPTY) {
+      return 0
+    }
+
+    return this.checkPart(x - 1, y, color, [-1, 0], isMutable) +
+      this.checkPart(x + 1, y, color, [1, 0], isMutable) +
+      this.checkPart(x, y + 1, color, [0, 1], isMutable) +
+      this.checkPart(x, y - 1, color, [0, -1], isMutable) +
+      this.checkPart(x - 1, y - 1, color, [-1, -1], isMutable) +
+      this.checkPart(x + 1, y + 1, color, [1, 1], isMutable) +
+      this.checkPart(x - 1, y + 1, color, [-1, 1], isMutable) +
+      this.checkPart(x + 1, y - 1, color, [1, -1], isMutable);
+  }
+
+  checkPart(x: number, y: number, color: ReverseMapState, d: number[], isMutable: boolean) {
+    const r = this.checkPart2(x, y, color, d, isMutable)
+
+    if (r < 0) {
+      return 0
+    }
+
+    return r
+  }
+
+  checkPart2(x: number, y: number, color: ReverseMapState, d: number[], isMutable: boolean) {
     var col = this.get_color(x, y);
     if (col == ReverseMapState.BLOCK) {
-      return 0;
+      return -1;
     } else if (col == ReverseMapState.EMPTY) {
-      return 0;
+      return -1;
     } else {
       if (col == color) {
-        return 1;
+        return 0;
       } else {
-        var c = this.checkPart(x + d[0], y + d[1], color, d);
-        if (c > 0) {
-          this.change_color(x, y, color);
+        var c = this.checkPart2(x + d[0], y + d[1], color, d, isMutable);
+        if (c >= 0) {
+          if (isMutable) {
+            this.change_color(x, y, color);
+          }
           return c + 1;
         }
       }
     }
-    return 0;
 
+    return -1
   }
 
   change_color(x: number, y: number, color: ReverseMapState) {
-    // this.map.put(x, y, color);
     this.changeColorCallback(x, y, color)
     this.set_color(x, y, color);
   }
