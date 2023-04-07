@@ -1,7 +1,7 @@
 import { Actor, Color, DisplayMode, Engine, Loader } from "excalibur";
 import { Cell } from "./cell";
 import { Resources } from "./resources";
-import { ReverseMap, ReverseMapState } from "./reverse";
+import { ReverseMap } from "./reverse";
 import { basicAICallback } from "./reverse/basic";
 
 class Game extends Engine {
