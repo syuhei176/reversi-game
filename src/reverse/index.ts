@@ -37,10 +37,29 @@ export class ReverseMap {
     const isTurnSucceed = this.put(x, y, color)
 
     if (isTurnSucceed && this.aiCallback) {
+      const passRequired = this.checkPass(this.current_color)
+
+      if (passRequired) {
+        this.turn();
+      } else {
+        this.putByAI()
+      }
+    }
+  }
+
+  putByAI() {
+    if (this.aiCallback) {
       const result = this.aiCallback(this)
 
       setTimeout(() => {
         this.put(result.x, result.y, this.current_color)
+
+        const passRequired = this.checkPass(this.current_color)
+
+        if (passRequired) {
+          this.turn()
+          this.putByAI()
+        }
       }, 1000)
     }
   }
@@ -53,7 +72,30 @@ export class ReverseMap {
 
       return true
     }
+
+    return false
   }
+
+  checkPass(color: ReverseMapState) {
+    let availables = 0
+    let empty = 0
+
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        let col = this.get_color(i, j);
+        if (col === ReverseMapState.EMPTY) {
+          empty++
+        }
+
+        if (this.check(i, j, color)) {
+          availables++
+        }
+      }
+    }
+
+    return empty > 0 && availables === 0
+  }
+
 
   check(x: number, y: number, color: ReverseMapState) {
     return this._check(x, y, color, false)

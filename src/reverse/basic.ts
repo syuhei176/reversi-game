@@ -19,7 +19,7 @@ export const basicAICallback: AICallback = (self: ReverseMap) => {
         if (i == 1 && j == 1 || i == 1 && j == 6 || i == 6 && j == 1 || i == 6 && j == 6 ||
           i == 1 && j == 0 || i == 1 && j == 7 || i == 6 && j == 0 || i == 6 && j == 7 ||
           i == 0 && j == 1 || i == 0 && j == 6 || i == 7 && j == 1 || i == 7 && j == 6) {
-          score -= 1
+          score = 0
         }
 
         if (bestScore < score) {
